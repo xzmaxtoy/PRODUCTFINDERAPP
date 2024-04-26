@@ -10,13 +10,26 @@ async function loadCategories() {
         const categories = await response.json();
         const categorySelect = document.getElementById('productCategory');
         categorySelect.innerHTML = '<option value="">Select a category</option>';
+        let defaultCategorySet = false;
+
         categories.forEach(category => {
-            categorySelect.innerHTML += `<option value="${category['分类']}">${category['分类']}</option>`;
+            const isSelected = category['分类'] === "003 文胸系列";
+            categorySelect.innerHTML += `<option value="${category['分类']}" ${isSelected ? 'selected' : ''}>${category['分类']}</option>`;
+            if (isSelected) {
+                defaultCategorySet = true;
+            }
         });
+
+        // Check if the default category was set and then load handles for that category
+        if (defaultCategorySet) {
+            loadHandles("003 文胸系列");
+        }
+
     } catch (error) {
         console.error('Error fetching categories:', error);
     }
 }
+
 
 // Function to load handles into the datalist
 async function loadHandles(category) {
@@ -137,8 +150,10 @@ document.getElementById('productCup').addEventListener('change', function() {
 
 
 // Function to fetch and display related product details
+// Function to fetch and display related product details
 async function loadRelatedProductDetails(sku) {
-    const endpoint = `/api/related-products?sku=${encodeURIComponent(sku)}&pageNumber=1&pageSize=20`;
+    const selectedCategory = document.getElementById('productCategory').value;
+    const endpoint = `/api/related-products?sku=${encodeURIComponent(sku)}&category=${encodeURIComponent(selectedCategory)}&pageNumber=1&pageSize=20`;
     console.log('Requesting related products:', endpoint);
     try {
         const response = await fetch(endpoint);

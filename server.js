@@ -32,16 +32,31 @@ sql.connect(dbConfig).then(() => {
     console.error('Database connection failed:', err);
 });
 
+// Simple in-memory cache
+let categoryCache = null;
+let lastCacheTime = null;
+const CACHE_DURATION = 30 * 60 * 1000; // cache duration in milliseconds, e.g., 30 minutes
+
+
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
 
 // API endpoint to retrieve unique categories
 app.get('/api/categories', async (req, res) => {
+    const now = new Date();
+    if (categoryCache && lastCacheTime && (now - lastCacheTime) < CACHE_DURATION) {
+        res.json(categoryCache);
+        return;
+    }
+
     try {
         const result = await sql.query`SELECT DISTINCT [分类] FROM products ORDER BY [分类]`;
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).send({ message: "Error while querying database for categories", error: err });
+        categoryCache = result.recordset;
+        lastCacheTime = new Date();
+        res.json(categoryCache);
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).send({ message: "Error while querying database for categories", error });
     }
 });
 
@@ -111,52 +126,59 @@ app.get('/api/product-details', async (req, res) => {
     }
 });
 
-// API endpoint to retrieve related products and their details with pagination
+// API endpoint to retrieve related products, filtered by category, with pagination
 app.get('/api/related-products', async (req, res) => {
-    const { sku, pageNumber, pageSize } = req.query; // pageNumber and pageSize are used for pagination
-    const page = pageNumber || 1; // Default to page 1 if not provided
-    const size = pageSize || 20; // Default to 20 rows per page if not provided
-    const offset = (page - 1) * size; // Calculate the offset
+    const { sku, category, pageNumber, pageSize } = req.query;
+    const page = pageNumber || 1;
+    const size = pageSize || 20;
+    const offset = (page - 1) * size;
 
     try {
         const pool = await sql.connect(dbConfig);
         const relatedProductsQuery = `
-        WITH OrderedProducts AS (
-            SELECT 
-                ROW_NUMBER() OVER (ORDER BY SUM(CAST(ISNULL(sl.数量, 0) AS INT)) DESC) as RowNum,
-                sl.sku, 
-                p.名称, 
-                p.p_cup, 
-                p.p_size, 
-                SUM(CAST(ISNULL(sl.数量, 0) AS INT)) as weight,
-                CAST(p.BKStorage AS INT) AS BKStorage,
-                CAST(p.Brooklyn AS INT) AS Brooklyn,
-                CAST(p.Chinatown AS INT) AS Chinatown,
-                CAST(p.Flushing AS INT) AS Flushing,
-                CAST(p.BK59ST AS INT) AS BK59ST,
-                CAST(p.CA AS INT) AS CA
-            FROM 
-                sell_list sl
-            INNER JOIN 
-                products p ON sl.sku = p.sku
-            WHERE 
-                sl.sell_id IN (SELECT sell_id FROM sell_list WHERE sku = @sku)
-                AND sl.sku != @sku
-            GROUP BY 
-                sl.sku, p.名称, p.p_cup, p.p_size, p.BKStorage, p.Brooklyn, p.Chinatown, p.Flushing, p.BK59ST, p.CA
-        )
-        SELECT * FROM OrderedProducts WHERE RowNum BETWEEN @offset AND @offset + @size
-    `;
-    
+            WITH RelatedSKUs AS (
+                SELECT DISTINCT sl.sku
+                FROM sell_list sl
+                WHERE sl.sell_id IN (
+                    SELECT DISTINCT sl2.sell_id
+                    FROM sell_list sl2
+                    INNER JOIN products p ON p.sku = sl2.sku
+                    WHERE sl2.sku = @sku AND p.[分类] = @category
+                )
+            ), OrderedProducts AS (
+                SELECT 
+                    ROW_NUMBER() OVER (ORDER BY p.名称) as RowNum,
+                    p.sku, 
+                    p.名称,
+                    p.p_cup,
+                    p.p_size,
+                    (SELECT SUM(CAST(sl.数量 AS INT)) FROM sell_list sl WHERE sl.sku = p.sku) as weight,
+                    CAST(p.BKStorage AS INT) AS BKStorage,
+                    CAST(p.Brooklyn AS INT) AS Brooklyn,
+                    CAST(p.Chinatown AS INT) AS Chinatown,
+                    CAST(p.Flushing AS INT) AS Flushing,
+                    CAST(p.BK59ST AS INT) AS BK59ST,
+                    CAST(p.CA AS INT) AS CA
+                FROM 
+                    products p
+                INNER JOIN 
+                    RelatedSKUs r ON p.sku = r.sku
+                WHERE 
+                    p.[分类] = @category
+            )
+            SELECT * FROM OrderedProducts WHERE RowNum BETWEEN @offset AND @offset + @size;
+        `;
 
         const result = await pool.request()
             .input('sku', sql.NVarChar, sku)
+            .input('category', sql.NVarChar, category)
             .input('offset', sql.Int, offset)
             .input('size', sql.Int, size)
             .query(relatedProductsQuery);
 
         res.json(result.recordset);
     } catch (err) {
+        console.error(err);
         res.status(500).send({ message: "Error while querying database for related products", error: err });
     }
 });
