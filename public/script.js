@@ -123,13 +123,14 @@ function displayProductDetails(productDetails) {
 
 
 
-// Call loadProductDetails when both size and cup are selected
 // Ensure to call this function with the right order of parameters
+// Call loadProductDetails when both size and cup are selected
 document.getElementById('productCup').addEventListener('change', function() {
     const handleValue = document.getElementById('productHandleInput').value;
-    // Note: Ensure these values are in the format that matches the database entries
-    const cupValue = this.value;
-    const sizeValue = document.getElementById('productSize').value;
-    
-    loadProductDetails(handleValue, cupValue, sizeValue);
+    const cupValue = this.value; // Might be empty
+    const sizeValue = document.getElementById('productSize').value; // Might be empty
+
+    if (handleValue) { // Now we only check if handleValue is present
+        loadProductDetails(handleValue, cupValue, sizeValue);
+    }
 });

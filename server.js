@@ -88,38 +88,29 @@ app.get('/api/cups/:handle/:size', async (req, res) => {
 });
 
 // API endpoint to retrieve SKU and 名称 based on handle, cup, and size
+// API endpoint to retrieve SKU and 名称 based on handle, and optional cup and size
 app.get('/api/product-details', async (req, res) => {
     const { handle, cup, size } = req.query;
-
-    // Log received parameters for debugging
-    console.log('Received parameters:', { handle, cup, size });
-
     try {
+        let query = `SELECT sku, 名称 FROM products WHERE handle = @handle`;
+        
+        if (cup) query += ` AND p_cup = @cup`;
+        if (size) query += ` AND p_size = @size`;
+
         const pool = await sql.connect(dbConfig);
-        const request = pool.request();
+        const request = pool.request()
+            .input('handle', sql.NVarChar, handle);
 
-        // Add input parameters to the request
-        request.input('handle', sql.NVarChar, handle);
-        request.input('cup', sql.NVarChar, cup);
-        request.input('size', sql.NVarChar, size);
+        if (cup) request.input('cup', sql.NVarChar, cup);
+        if (size) request.input('size', sql.NVarChar, size);
 
-        // Construct and log the SQL query for debugging
-        const query = `SELECT sku, 名称 FROM products WHERE handle = @handle AND p_cup = @cup AND p_size = @size`;
-        console.log('Executing query:', query);
-
-        // Execute the query
         const result = await request.query(query);
-
-        // Log the result for debugging
-        console.log('Query result:', result.recordset);
-
-        // Send the result to the client
         res.json(result.recordset);
     } catch (err) {
-        console.error('Error querying database:', err);
         res.status(500).send({ message: "Error while querying database for product details", error: err });
     }
 });
+
 
 
 // Start the server on port 3000
