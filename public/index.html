@@ -3,40 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
     <title>Product Finder</title>
+    <style>
+        /* Add your styles here */
+        label, select, input {
+            margin: 5px;
+            display: block; /* Make each input and label appear on a new line */
+        }
+    </style>
 </head>
 <body>
     <h1>Product Finder</h1>
     
+    <!-- Category Dropdown -->
     <label for="productCategory">Category:</label>
-<select id="productCategory" onchange="loadHandles()">
-    <option value="">Select a category</option>
-    <!-- Categories will be loaded here -->
-</select>
+    <select id="productCategory">
+        <option value="">Select a category</option>
+        <!-- Categories will be loaded by script.js -->
+    </select>
 
-<script>
-  // When the window loads, fetch categories
-  window.onload = function() {
-    loadCategories();
-  };
-</script>
+    <!-- Handle Searchable Dropdown -->
+    <label for="productHandleInput">Handle:</label>
+    <input list="handleList" id="productHandleInput" onchange="updateSizesAndCups()" placeholder="Start typing...">
+    <datalist id="handleList">
+        <!-- Handles will be loaded based on the selected category by script.js -->
+    </datalist>
 
-    <label for="productHandle">Product Handle:</label>
-    <input type="text" id="productHandle" oninput="searchHandle()">
-    
-    <div id="dropdown" class="dropdown-content"></div>
-    
+    <!-- Size Dropdown -->
     <label for="productSize">Size:</label>
-<select id="productSize" onchange="updateCups()">
-    <option value="">Select a size</option>
-    <!-- Sizes will be loaded here -->
-</select>
+    <select id="productSize">
+        <option value="">Select a size</option>
+        <!-- Sizes will be loaded based on the selected handle by script.js -->
+    </select>
 
-<label for="productCup">Cup:</label>
-<select id="productCup">
-    <option value="">Select a cup</option>
-    <!-- Cups will be loaded here -->
+    <!-- Cup Dropdown -->
+    <label for="productCup">Cup:</label>
+    <select id="productCup">
+        <option value="">Select a cup</option>
+        <!-- Cups will be loaded based on the selected handle and size by script.js -->
+    </select>
 
     <script src="script.js"></script>
 </body>

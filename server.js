@@ -1,107 +1,94 @@
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
 }
-
-
+// Import required modules
 const express = require('express');
-const app = express();
 const sql = require('mssql');
 
+// Initialize express app
+const app = express();
+
+// Set up database configuration
 const dbConfig = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    server: process.env.DB_SERVER,
+    user: process.env.DB_USER, // Set your DB user
+    password: process.env.DB_PASSWORD, // Set your DB password
+    database: process.env.DB_NAME, // Set your DB name
+    server: process.env.DB_SERVER, // Set your DB server
     pool: {
         max: 10,
         min: 0,
         idleTimeoutMillis: 30000
     },
     options: {
-        encrypt: true, // for azure
-        trustServerCertificate: false // change to true for local dev / self-signed certs
+        encrypt: true,
+        trustServerCertificate: false
     }
 };
 
-// Attempt to connect and execute queries if connection goes through
-sql.connect(dbConfig).then(pool => {
-    if (pool.connecting) {
-        console.log('Connecting to the database...');
-    }
-
-    if (pool.connected) {
-        console.log('Connected to the database.');
-    }
-
-    return pool;
+// Connect to the database
+sql.connect(dbConfig).then(() => {
+    console.log('Connected to the database successfully.');
 }).catch(err => {
-    console.error('Database connection failed!', err);
+    console.error('Database connection failed:', err);
 });
-
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
 
-
-app.get('/api/handles', async (req, res) => {
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .query('SELECT DISTINCT handle FROM products'); // Adjust the query to match your actual data structure.
-        res.json(result.recordset); // Send the results back to the frontend.
-    } catch (err) {
-        res.status(500).send({ message: "Error while querying database" });
-        console.error(err);
-    }
-});
-
-
-app.get('/api/sizes/:handle', async (req, res) => {
-    const handle = req.params.handle;
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .input('handle', sql.VarChar, handle)
-            .query('SELECT DISTINCT p_size FROM products WHERE handle = @handle ORDER BY p_size');
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).send({ message: "Error while querying database for sizes" });
-        console.error(err);
-    }
-});
-
-app.get('/api/cups/:handle/:size', async (req, res) => {
-    const handle = req.params.handle;
-    const size = req.params.size;
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .input('handle', sql.VarChar, handle)
-            .input('size', sql.VarChar, size)
-            .query('SELECT DISTINCT p_cup FROM products WHERE handle = @handle AND p_size = @size ORDER BY p_cup');
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).send({ message: "Error while querying database for cups" });
-        console.error(err);
-    }
-});
-
-
+// API endpoint to retrieve unique categories
 app.get('/api/categories', async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .query('SELECT DISTINCT 分类 FROM products ORDER BY 分类'); // Replace 分类 with the actual column name for categories if different.
+        const result = await sql.query`SELECT DISTINCT [分类] FROM products ORDER BY [分类]`;
         res.json(result.recordset);
     } catch (err) {
-        res.status(500).send({ message: "Error while querying database for categories" });
-        console.error(err);
+        res.status(500).send({ message: "Error while querying database for categories", error: err });
     }
 });
 
+// API endpoint to retrieve handles filtered by category
+app.get('/api/handles', async (req, res) => {
+    const { category } = req.query;
+    try {
+        let query = `SELECT DISTINCT handle FROM products`;
+        if (category) {
+            query += ` WHERE [分类] = @category`;
+        }
+        query += ` ORDER BY handle`;
 
-// Start the server
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input('category', sql.NVarChar, category)
+            .query(query);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send({ message: "Error while querying database for handles", error: err });
+    }
+});
+
+// API endpoint to retrieve sizes based on handle
+app.get('/api/sizes/:handle', async (req, res) => {
+    const { handle } = req.params;
+    try {
+        const result = await sql.query`SELECT DISTINCT p_size FROM products WHERE handle = ${handle} ORDER BY p_size`;
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send({ message: "Error while querying database for sizes", error: err });
+    }
+});
+
+// API endpoint to retrieve cups based on handle and size
+app.get('/api/cups/:handle/:size', async (req, res) => {
+    const { handle, size } = req.params;
+    try {
+        const result = await sql.query`SELECT DISTINCT p_cup FROM products WHERE handle = ${handle} AND p_size = ${size} ORDER BY p_cup`;
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send({ message: "Error while querying database for cups", error: err });
+    }
+});
+
+// Start the server on port 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

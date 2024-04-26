@@ -1,102 +1,91 @@
+// Event listener for DOM content loaded
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+});
+
+// Function to load categories into the dropdown
 async function loadCategories() {
     try {
         const response = await fetch('/api/categories');
         const categories = await response.json();
         const categorySelect = document.getElementById('productCategory');
-        categorySelect.innerHTML = categories.map(c => 
-            `<option value="${c.分类}">${c.分类}</option>`).join('');
+        categorySelect.innerHTML = '<option value="">Select a category</option>';
+        categories.forEach(category => {
+            categorySelect.innerHTML += `<option value="${category['分类']}">${category['分类']}</option>`;
+        });
     } catch (error) {
         console.error('Error fetching categories:', error);
     }
 }
 
-async function loadHandles() {
-    const category = document.getElementById('productCategory').value;
-    const dropdown = document.getElementById('dropdown');
-
-    if (!category) {
-        dropdown.style.display = 'none';
-        return;
-    }
-
+// Function to load handles into the datalist
+async function loadHandles(category) {
     try {
-        // Fetch the handles from the server based on the selected category
         const response = await fetch(`/api/handles?category=${category}`);
         const handles = await response.json();
-
-        // ... (Rest of your handle fetching and filtering logic)
+        const handleList = document.getElementById('handleList');
+        handleList.innerHTML = ''; // Clear existing options
+        handles.forEach(handle => {
+            handleList.innerHTML += `<option value="${handle.handle}">${handle.handle}</option>`;
+        });
     } catch (error) {
         console.error('Error fetching handles:', error);
     }
 }
 
-async function searchHandle() {
-    const input = document.getElementById('productHandle').value;
-    const dropdown = document.getElementById('dropdown');
-    if (!input) {
-        dropdown.style.display = 'none';
-        return;
-    }
-
-    try {
-        // Fetch the handles from the server
-        const response = await fetch('/api/handles');
-        const handles = await response.json();
-
-        // Filter handles based on input and display them in the dropdown
-        const filteredHandles = handles.filter(h => 
-            h.handle.toLowerCase().includes(input.toLowerCase())
-        );
-
-        dropdown.innerHTML = filteredHandles.map(h => 
-            `<div onclick="selectHandle('${h.handle}')">${h.handle}</div>`
-        ).join('');
-
-        dropdown.style.display = 'block';
-    } catch (error) {
-        console.error('Error fetching handles:', error);
-    }
-}
-
-function selectHandle(value) {
-    document.getElementById('productHandle').value = value;
-    document.getElementById('dropdown').style.display = 'none';
-}
-
-function selectHandle(handle) {
-    document.getElementById('productHandle').value = handle;
-    loadSizes(handle);
-    document.getElementById('dropdown').style.display = 'none';
-}
-
+// Function to load sizes into the dropdown
 async function loadSizes(handle) {
     try {
         const response = await fetch(`/api/sizes/${handle}`);
         const sizes = await response.json();
-
         const sizeSelect = document.getElementById('productSize');
-        sizeSelect.innerHTML = sizes.map(s => `<option value="${s.p_size}">${s.p_size}</option>`).join('');
+        sizeSelect.innerHTML = '<option value="">Select a size</option>';
+        sizes.forEach(size => {
+            sizeSelect.innerHTML += `<option value="${size.p_size}">${size.p_size}</option>`;
+        });
     } catch (error) {
         console.error('Error fetching sizes:', error);
     }
 }
 
-async function updateCups() {
-    const handle = document.getElementById('productHandle').value;
-    const size = document.getElementById('productSize').value;
-    
-    if (!handle || !size) {
-        document.getElementById('productCup').innerHTML = '';
-        return;
-    }
-
+// Function to load cups into the dropdown
+async function loadCups(handle, size) {
     try {
         const response = await fetch(`/api/cups/${handle}/${size}`);
         const cups = await response.json();
-
         const cupSelect = document.getElementById('productCup');
-        cupSelect.innerHTML = cups.map(c => `<option value="${c.p_cup}">${c.p_cup}</option>`).join('');
+        cupSelect.innerHTML = '<option value="">Select a cup</option>';
+        cups.forEach(cup => {
+            cupSelect.innerHTML += `<option value="${cup.p_cup}">${cup.p_cup}</option>`;
+        });
     } catch (error) {
         console.error('Error fetching cups:', error);
     }
 }
+
+// Handlers for dropdown change events
+document.getElementById('productCategory').addEventListener('change', function() {
+    const category = this.value;
+    if (category) {
+        loadHandles(category);
+    } else {
+        document.getElementById('handleList').innerHTML = '';
+    }
+});
+
+// When the handle is selected from the datalist, load sizes and cups
+document.getElementById('productHandleInput').addEventListener('input', function() {
+    const handleValue = this.value;
+    // Load sizes and reset cups when a new handle is entered
+    loadSizes(handleValue);
+    document.getElementById('productCup').innerHTML = '<option value="">Select a cup</option>';
+});
+
+// When the size is selected, load cups
+document.getElementById('productSize').addEventListener('change', function() {
+    const handleValue = document.getElementById('productHandleInput').value;
+    const sizeValue = this.value;
+    if (handleValue && sizeValue) {
+        loadCups(handleValue, sizeValue);
+    }
+});
