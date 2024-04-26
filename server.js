@@ -55,6 +55,38 @@ app.get('/api/handles', async (req, res) => {
     }
 });
 
+
+app.get('/api/sizes/:handle', async (req, res) => {
+    const handle = req.params.handle;
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input('handle', sql.VarChar, handle)
+            .query('SELECT DISTINCT p_size FROM products WHERE handle = @handle ORDER BY p_size');
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send({ message: "Error while querying database for sizes" });
+        console.error(err);
+    }
+});
+
+app.get('/api/cups/:handle/:size', async (req, res) => {
+    const handle = req.params.handle;
+    const size = req.params.size;
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input('handle', sql.VarChar, handle)
+            .input('size', sql.VarChar, size)
+            .query('SELECT DISTINCT p_cup FROM products WHERE handle = @handle AND p_size = @size ORDER BY p_cup');
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send({ message: "Error while querying database for cups" });
+        console.error(err);
+    }
+});
+
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

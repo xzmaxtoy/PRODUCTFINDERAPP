@@ -10,7 +10,19 @@
     <h1>Product Finder</h1>
     <label for="productHandle">Product Handle:</label>
     <input type="text" id="productHandle" oninput="searchHandle()">
+    
     <div id="dropdown" class="dropdown-content"></div>
+    
+    <label for="productSize">Size:</label>
+<select id="productSize" onchange="updateCups()">
+    <option value="">Select a size</option>
+    <!-- Sizes will be loaded here -->
+</select>
+
+<label for="productCup">Cup:</label>
+<select id="productCup">
+    <option value="">Select a cup</option>
+    <!-- Cups will be loaded here -->
 
     <script src="script.js"></script>
 </body>
