@@ -87,6 +87,19 @@ app.get('/api/cups/:handle/:size', async (req, res) => {
 });
 
 
+app.get('/api/categories', async (req, res) => {
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .query('SELECT DISTINCT 分类 FROM products ORDER BY 分类'); // Replace 分类 with the actual column name for categories if different.
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send({ message: "Error while querying database for categories" });
+        console.error(err);
+    }
+});
+
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

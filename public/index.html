@@ -8,6 +8,20 @@
 </head>
 <body>
     <h1>Product Finder</h1>
+    
+    <label for="productCategory">Category:</label>
+<select id="productCategory" onchange="loadHandles()">
+    <option value="">Select a category</option>
+    <!-- Categories will be loaded here -->
+</select>
+
+<script>
+  // When the window loads, fetch categories
+  window.onload = function() {
+    loadCategories();
+  };
+</script>
+
     <label for="productHandle">Product Handle:</label>
     <input type="text" id="productHandle" oninput="searchHandle()">
     

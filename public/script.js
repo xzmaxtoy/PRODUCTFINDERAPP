@@ -1,3 +1,35 @@
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+        const categorySelect = document.getElementById('productCategory');
+        categorySelect.innerHTML = categories.map(c => 
+            `<option value="${c.分类}">${c.分类}</option>`).join('');
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+}
+
+async function loadHandles() {
+    const category = document.getElementById('productCategory').value;
+    const dropdown = document.getElementById('dropdown');
+
+    if (!category) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    try {
+        // Fetch the handles from the server based on the selected category
+        const response = await fetch(`/api/handles?category=${category}`);
+        const handles = await response.json();
+
+        // ... (Rest of your handle fetching and filtering logic)
+    } catch (error) {
+        console.error('Error fetching handles:', error);
+    }
+}
+
 async function searchHandle() {
     const input = document.getElementById('productHandle').value;
     const dropdown = document.getElementById('dropdown');
