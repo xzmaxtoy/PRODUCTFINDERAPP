@@ -134,3 +134,61 @@ document.getElementById('productCup').addEventListener('change', function() {
         loadProductDetails(handleValue, cupValue, sizeValue);
     }
 });
+
+
+// Function to fetch and display related product details
+async function loadRelatedProductDetails(sku) {
+    const endpoint = `/api/related-products?sku=${encodeURIComponent(sku)}&pageNumber=1&pageSize=20`;
+    console.log('Requesting related products:', endpoint);
+    try {
+        const response = await fetch(endpoint);
+        const relatedProducts = await response.json();
+        console.log('Related product details:', relatedProducts);
+        displayRelatedProductDetails(relatedProducts);
+    } catch (error) {
+        console.error('Error fetching related product details:', error);
+    }
+}
+
+// Function to display product details in a table
+function displayProductDetails(productDetails) {
+    const tableBody = document.getElementById('productDetailsTableBody');
+    tableBody.innerHTML = ''; // Clear existing table rows
+
+    productDetails.forEach(product => {
+        const row = `<tr>
+                        <td>${product.sku}</td>
+                        <td>${product.名称}</td>
+                     </tr>`;
+        tableBody.innerHTML += row;
+    });
+
+    // Assuming productDetails contains at least one product
+    if (productDetails.length > 0) {
+        loadRelatedProductDetails(productDetails[0].sku);
+    }
+}
+
+
+// Function to display related product details in a table
+function displayRelatedProductDetails(relatedProducts) {
+    const tableBody = document.getElementById('relatedProductsTableBody');
+    tableBody.innerHTML = ''; // Clear existing table rows
+
+    relatedProducts.forEach(product => {
+        const row = `<tr>
+                        <td>${product.sku}</td>
+                        <td>${product.名称}</td>
+                        <td>${product.p_cup}</td>
+                        <td>${product.p_size}</td>
+                        <td>${product.weight}</td>
+                        <td>${product.BKStorage}</td>
+                        <td>${product.Brooklyn}</td>
+                        <td>${product.Chinatown}</td>
+                        <td>${product.Flushing}</td>
+                        <td>${product.BK59ST}</td>
+                        <td>${product.CA}</td>
+                     </tr>`;
+        tableBody.innerHTML += row;
+    });
+}
