@@ -17,3 +17,19 @@
 .dropdown-content div:hover {
     background-color: #f1f1f1;
 }
+
+/* ... existing styles ... */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}

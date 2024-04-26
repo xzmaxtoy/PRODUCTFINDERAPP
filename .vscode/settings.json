@@ -1,4 +1,5 @@
 {
     "appService.defaultWebAppToDeploy": "/subscriptions/7014eae7-3a35-41b5-99e8-19527af564f7/resourceGroups/relatedproductapi/providers/Microsoft.Web/sites/ProductFinderApp",
-    "appService.deploySubpath": "."
+    "appService.deploySubpath": ".",
+    "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }

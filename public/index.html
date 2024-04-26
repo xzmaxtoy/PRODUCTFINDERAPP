@@ -24,7 +24,7 @@
 
     <!-- Handle Searchable Dropdown -->
     <label for="productHandleInput">Handle:</label>
-    <input list="handleList" id="productHandleInput" onchange="updateSizesAndCups()" placeholder="Start typing...">
+    <input list="handleList" id="productHandleInput" placeholder="Start typing...">
     <datalist id="handleList">
         <!-- Handles will be loaded based on the selected category by script.js -->
     </datalist>
@@ -42,6 +42,21 @@
         <option value="">Select a cup</option>
         <!-- Cups will be loaded based on the selected handle and size by script.js -->
     </select>
+
+<!-- Product Details Table -->
+<table id="productDetailsTable">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>名称</th>
+        </tr>
+    </thead>
+    <tbody id="productDetailsTableBody">
+        <!-- Product details will be loaded here -->
+    </tbody>
+</table>
+
+
 
     <script src="script.js"></script>
 </body>

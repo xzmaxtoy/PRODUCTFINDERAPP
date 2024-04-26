@@ -89,3 +89,47 @@ document.getElementById('productSize').addEventListener('change', function() {
         loadCups(handleValue, sizeValue);
     }
 });
+
+
+
+// Function to fetch and display product details
+async function loadProductDetails(handle, cup, size) {
+    // Ensure the parameters are in the correct order: handle, cup, size
+    const endpoint = `/api/product-details?handle=${encodeURIComponent(handle)}&cup=${encodeURIComponent(cup)}&size=${encodeURIComponent(size)}`;
+    console.log('Requesting:', endpoint);
+    try {
+        const response = await fetch(endpoint);
+        const productDetails = await response.json();
+        console.log('Product details:', productDetails);
+        displayProductDetails(productDetails);
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+    }
+}
+
+// Function to display product details in a table
+function displayProductDetails(productDetails) {
+    const tableBody = document.getElementById('productDetailsTableBody');
+    tableBody.innerHTML = ''; // Clear existing table rows
+
+    productDetails.forEach(product => {
+        const row = `<tr>
+                        <td>${product.sku}</td>
+                        <td>${product.名称}</td>
+                     </tr>`;
+        tableBody.innerHTML += row;
+    });
+}
+
+
+
+// Call loadProductDetails when both size and cup are selected
+// Ensure to call this function with the right order of parameters
+document.getElementById('productCup').addEventListener('change', function() {
+    const handleValue = document.getElementById('productHandleInput').value;
+    // Note: Ensure these values are in the format that matches the database entries
+    const cupValue = this.value;
+    const sizeValue = document.getElementById('productSize').value;
+    
+    loadProductDetails(handleValue, cupValue, sizeValue);
+});
